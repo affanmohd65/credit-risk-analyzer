@@ -30,6 +30,5 @@ def predict_records(model: Any, applications: list[dict[str, Any]]) -> list[dict
         probability = float(probability)
         category = risk_category(probability)
         results.append({"default_probability": round(probability, 4), "risk_score": round(probability * 100),
-                        "risk_category": category, "decision": loan_decision(category),
-                        "business_rule_notice": "Risk categories are illustrative and must not be used as lending decisions."})
+                "risk_category": category, "decision": loan_decision(category)})
     return results

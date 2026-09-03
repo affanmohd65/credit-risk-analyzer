@@ -56,4 +56,4 @@ def model_info() -> dict:
 
 @app.get("/risk-rules")
 def risk_rules() -> dict:
-    return {"thresholds": {"low_max": RISK_RULES.low_max, "medium_max": RISK_RULES.medium_max, "high_max": RISK_RULES.high_max}, "rules_notice": "Risk categories are illustrative and must not be used as lending decisions."}
+    return {"thresholds": {"low_max": RISK_RULES.low_max, "medium_max": RISK_RULES.medium_max, "high_max": RISK_RULES.high_max}}

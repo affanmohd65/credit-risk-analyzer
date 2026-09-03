@@ -1,6 +1,6 @@
 # Credit Risk Analyzer
 
-Credit-card default analysis using the public **UCI Default of Credit Card Clients** dataset. The application estimates default probability, assigns a configurable risk band, and provides an illustrative risk action. It is a data-science portfolio project and must not be used to make real lending decisions.
+An end-to-end credit risk analytics project using the public **UCI Default of Credit Card Clients** dataset. It ingests and validates data, engineers features, trains and calibrates multiple classifiers, exposes predictions through FastAPI, and presents results in Streamlit.
 
 ## Data Source
 

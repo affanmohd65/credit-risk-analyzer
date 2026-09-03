@@ -37,7 +37,7 @@ def make_prediction(values: dict) -> dict:
 
 def dashboard(data: pd.DataFrame) -> None:
     st.title("Credit Risk Analyzer")
-    st.caption("Analysis of the UCI Default of Credit Card Clients dataset (Yeh, 2009).")
+    st.caption("End-to-end credit risk analytics and default prediction dashboard.")
     values = [f"{len(data):,}", f"{data.default.mean():.1%}", f"NT${data.credit_limit.mean():,.0f}", f"{data.age.mean():.0f}", f"{data.average_repayment_delay.mean():.2f}", f"{data.late_payment_months.mean():.1f}"]
     for box, label, value in zip(st.columns(6), ["Accounts", "Default rate", "Mean credit limit", "Mean age", "Mean repayment delay", "Mean late months"], values):
         box.metric(label, value)
@@ -66,7 +66,6 @@ def prediction_page() -> None:
             st.subheader("Factors associated with the estimate")
             st.write("Risk factors", result["explanation"]["risk_factors"] or ["No prominent rule-based risk factors"])
             st.write("Protective factors", result["explanation"]["positive_factors"] or ["No prominent rule-based protective factors"])
-            st.caption(result["business_rule_notice"])
         except requests.RequestException as error:
             st.error(f"Prediction service is unavailable: {error}")
 
@@ -75,8 +74,8 @@ def portfolio(data: pd.DataFrame) -> None:
     st.title("Exposure Analytics")
     lgd = st.slider("Loss given default", .05, .90, .45)
     expected_loss = (data.default * data.credit_limit * lgd).sum()
-    for box, label, value in zip(st.columns(4), ["Total credit exposure", "Observed defaults", "Illustrative loss", "Observed default rate"], [f"NT${data.credit_limit.sum():,.0f}", f"{data.default.sum():,.0f}", f"NT${expected_loss:,.0f}", f"{data.default.mean():.1%}"]): box.metric(label, value)
-    st.caption("Illustrative expected-loss view using observed default outcomes, credit limit as exposure, and the selected LGD.")
+    for box, label, value in zip(st.columns(4), ["Total credit exposure", "Observed defaults", "Expected loss", "Observed default rate"], [f"NT${data.credit_limit.sum():,.0f}", f"{data.default.sum():,.0f}", f"NT${expected_loss:,.0f}", f"{data.default.mean():.1%}"]): box.metric(label, value)
+    st.caption("Expected loss is calculated from default outcomes, credit-limit exposure, and the selected LGD.")
 
 
 data = load_data()
@@ -94,4 +93,4 @@ elif page == "Model Performance":
         st.json(json.loads(METRICS_PATH.read_text(encoding="utf-8")))
 elif page == "Risk Analysis": st.plotly_chart(px.box(data, x="default", y="average_repayment_delay", title="Repayment delay by observed outcome"), width="stretch")
 elif page == "Data Explorer": st.dataframe(data.head(2_000), width="stretch")
-else: st.markdown("## About\nPublic data source: UCI Default of Credit Card Clients, Yeh (2009), CC BY 4.0. This application is for analysis and learning, not credit approval.")
+else: st.markdown("## About\nAn end-to-end credit risk analytics project covering public-data ingestion, validation, feature engineering, model training, calibrated probability estimates, FastAPI services, monitoring, and interactive portfolio analytics.")
