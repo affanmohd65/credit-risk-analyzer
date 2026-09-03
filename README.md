@@ -1,3 +1,5 @@
+Link: https://credit-risk-analyze.streamlit.app/
+
 # India Credit Risk Analyzer
 
 An end-to-end machine learning application for predicting retail-loan default risk in an India-focused lending portfolio.
@@ -71,3 +73,5 @@ Rented residence                   -> Higher default risk
 Stable employment                  -> Lower default risk
 Higher bureau score                -> Lower default risk
 Lower repayment burden             -> Lower default risk
+
+
