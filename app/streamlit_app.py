@@ -1,4 +1,5 @@
 import os
+import json
 
 import joblib
 import pandas as pd
@@ -78,19 +79,51 @@ def portfolio(data: pd.DataFrame) -> None:
     st.caption("Expected loss is calculated from default outcomes, credit-limit exposure, and the selected LGD.")
 
 
+def load_metrics() -> dict:
+    if API_URL:
+        response = requests.get(f"{API_URL}/model-info", timeout=10)
+        response.raise_for_status()
+        return response.json()
+    return json.loads(METRICS_PATH.read_text(encoding="utf-8"))
+
+
+def model_performance() -> None:
+    st.title("Model Performance")
+    try:
+        metrics = load_metrics()
+    except requests.RequestException as error:
+        st.error(f"Model metrics are unavailable: {error}")
+        return
+    metric_options = {"PR-AUC": "pr_auc", "ROC-AUC": "roc_auc", "F1 Score": "f1", "Recall": "recall", "Precision": "precision"}
+    selected_label = st.selectbox("Compare models by", list(metric_options))
+    selected_metric = metric_options[selected_label]
+    comparison = pd.DataFrame(metrics["validation"]).T.reset_index(names="model")
+    comparison = comparison.sort_values(selected_metric, ascending=False)
+    st.metric("Selected model", metrics["selected_model"].replace("_", " ").title(), f"Test {selected_label}: {metrics['test'][selected_metric]:.3f}")
+    st.plotly_chart(px.bar(comparison, x="model", y=selected_metric, color=selected_metric, title=f"Validation {selected_label} by model", text_auto=".3f"), width="stretch")
+    visible_columns = ["model", "accuracy", "precision", "recall", "f1", "roc_auc", "pr_auc", "specificity", "false_negative_rate"]
+    st.dataframe(comparison[visible_columns].style.format({column: "{:.3f}" for column in visible_columns[1:]}), width="stretch", hide_index=True)
+
+
+def risk_analysis(data: pd.DataFrame) -> None:
+    st.title("Risk Analysis")
+    age_range = st.slider("Age range", int(data.age.min()), int(data.age.max()), (int(data.age.min()), int(data.age.max())))
+    limit_range = st.slider("Credit-limit range (NT$)", int(data.credit_limit.min()), int(data.credit_limit.quantile(.99)), (int(data.credit_limit.min()), int(data.credit_limit.quantile(.99))))
+    status_options = sorted(data.pay_status_0.unique().tolist())
+    selected_statuses = st.multiselect("September payment statuses", status_options, default=status_options)
+    filtered = data[data.age.between(*age_range) & data.credit_limit.between(*limit_range) & data.pay_status_0.isin(selected_statuses)]
+    st.caption(f"Showing {len(filtered):,} selected accounts.")
+    left, right = st.columns(2)
+    left.plotly_chart(px.box(filtered, x="default", y="average_repayment_delay", title="Repayment delay by observed outcome"), width="stretch")
+    right.plotly_chart(px.histogram(filtered, x="credit_utilization_proxy", color="default", nbins=40, barmode="overlay", title="Utilization proxy by observed outcome"), width="stretch")
+
+
 data = load_data()
 page = st.sidebar.radio("Navigate", ["Dashboard", "Prediction", "Exposure Analytics", "Model Performance", "Risk Analysis", "Data Explorer", "About"])
 if page == "Dashboard": dashboard(data)
 elif page == "Prediction": prediction_page()
 elif page == "Exposure Analytics": portfolio(data)
-elif page == "Model Performance":
-    st.title("Model Performance")
-    if API_URL:
-        try: st.json(requests.get(f"{API_URL}/model-info", timeout=10).json())
-        except requests.RequestException as error: st.error(f"Prediction service is unavailable: {error}")
-    else:
-        import json
-        st.json(json.loads(METRICS_PATH.read_text(encoding="utf-8")))
-elif page == "Risk Analysis": st.plotly_chart(px.box(data, x="default", y="average_repayment_delay", title="Repayment delay by observed outcome"), width="stretch")
+elif page == "Model Performance": model_performance()
+elif page == "Risk Analysis": risk_analysis(data)
 elif page == "Data Explorer": st.dataframe(data.head(2_000), width="stretch")
 else: st.markdown("## About\nAn end-to-end credit risk analytics project covering public-data ingestion, validation, feature engineering, model training, calibrated probability estimates, FastAPI services, monitoring, and interactive portfolio analytics.")
