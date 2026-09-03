@@ -9,6 +9,6 @@ jobs:
         with: {python-version: '3.12'}
       - run: pip install -r requirements.txt
       - run: python -m compileall src api app scripts
-      - run: python scripts/download_data.py
+      - run: python scripts/generate_india_data.py
       - run: pytest -q
       - run: docker build .

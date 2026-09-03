@@ -38,28 +38,23 @@ def make_prediction(values: dict) -> dict:
 
 def dashboard(data: pd.DataFrame) -> None:
     st.title("Credit Risk Analyzer")
-    st.caption("End-to-end credit risk analytics and default prediction dashboard.")
-    values = [f"{len(data):,}", f"{data.default.mean():.1%}", f"NT${data.credit_limit.mean():,.0f}", f"{data.age.mean():.0f}", f"{data.average_repayment_delay.mean():.2f}", f"{data.late_payment_months.mean():.1f}"]
-    for box, label, value in zip(st.columns(6), ["Accounts", "Default rate", "Mean credit limit", "Mean age", "Mean repayment delay", "Mean late months"], values):
+    st.caption("India-focused retail lending analytics and default prediction dashboard.")
+    values = [f"{len(data):,}", f"{data.default.mean():.1%}", f"INR {data.loan_amount_inr.mean():,.0f}", f"{data.bureau_score.mean():.0f}", f"{data.foir.mean():.1%}", f"INR {data.proposed_emi_inr.mean():,.0f}"]
+    for box, label, value in zip(st.columns(6), ["Applications", "Default rate", "Average loan", "Average bureau score", "Average FOIR", "Average proposed EMI"], values):
         box.metric(label, value)
     left, right = st.columns(2)
-    age_rates = data.assign(age_band=pd.cut(data.age, [20, 30, 40, 50, 60, 80], labels=["20-29", "30-39", "40-49", "50-59", "60+"]).astype(str)).groupby("age_band", observed=True).default.mean().reset_index()
-    left.plotly_chart(px.bar(age_rates, x="age_band", y="default", title="Observed default rate by age band"), width="stretch")
-    right.plotly_chart(px.bar(data.groupby("education").default.mean().reset_index(), x="education", y="default", title="Observed default rate by education code"), width="stretch")
-    st.plotly_chart(px.histogram(data, x="credit_limit", color="default", nbins=50, title="Credit-limit distribution"), width="stretch")
+    left.plotly_chart(px.bar(data.groupby("city_tier").default.mean().reset_index(), x="city_tier", y="default", title="Default rate by city"), width="stretch")
+    right.plotly_chart(px.bar(data.groupby("loan_type").default.mean().reset_index(), x="loan_type", y="default", title="Default rate by loan type"), width="stretch")
+    st.plotly_chart(px.histogram(data, x="loan_amount_inr", color="default", nbins=50, title="Loan amount distribution"), width="stretch")
 
 
 def prediction_page() -> None:
-    st.title("Credit Card Default Prediction")
-    st.caption("Payment status: -1 means paid on time; positive values represent months of payment delay in the UCI data dictionary.")
+    st.title("Indian Retail Loan Default Prediction")
     with st.form("account"):
-        profile, payment, balances = st.columns(3)
-        values = {"credit_limit": profile.number_input("Credit limit (NT$)", 10_000, 2_000_000, 200_000), "age": profile.number_input("Age", 18, 100, 35), "sex": profile.selectbox("Sex code", [1, 2]), "education": profile.selectbox("Education code", [1, 2, 3, 4]), "marital_status": profile.selectbox("Marital-status code", [1, 2, 3]), "pay_status_0": payment.slider("September payment status", -2, 9, 0), "pay_status_2": payment.slider("August payment status", -2, 9, 0), "pay_status_3": payment.slider("July payment status", -2, 9, 0), "pay_status_4": payment.slider("June payment status", -2, 9, 0), "pay_status_5": payment.slider("May payment status", -2, 9, 0), "pay_status_6": payment.slider("April payment status", -2, 9, 0), "bill_amount_1": balances.number_input("September statement balance", -500_000, 2_000_000, 75_000), "payment_amount_1": balances.number_input("September payment amount", 0, 2_000_000, 15_000)}
+        profile, credit, loan = st.columns(3)
+        values = {"city_tier": profile.selectbox("City", ["Mumbai", "Delhi NCR", "Bengaluru", "Chennai", "Hyderabad", "Pune", "Ahmedabad", "Kolkata", "Tier 2/3"]), "employment_type": profile.selectbox("Employment type", ["Salaried", "Self Employed", "Professional", "Contract"]), "residence_type": profile.selectbox("Residence type", ["Owned", "Rented", "Family Owned"]), "age": profile.number_input("Age", 21, 70, 35), "employment_years": profile.number_input("Employment years", 0.0, 40.0, 5.0), "annual_income_inr": credit.number_input("Annual income (INR)", 120_000, 10_000_000, 750_000), "bureau_score": credit.number_input("Bureau score", 300, 900, 700), "credit_inquiries_6m": credit.number_input("Credit inquiries in last 6 months", 0, 12, 1), "overdue_accounts": credit.number_input("Overdue accounts", 0, 12, 0), "existing_emi_inr": credit.number_input("Existing monthly EMI (INR)", 0, 200_000, 10_000), "bank_balance_inr": loan.number_input("Bank balance (INR)", 0, 4_000_000, 100_000), "loan_type": loan.selectbox("Loan type", ["Personal Loan", "Two Wheeler", "Consumer Durable", "Home Improvement", "Business Loan"]), "loan_amount_inr": loan.number_input("Loan amount (INR)", 20_000, 3_000_000, 300_000), "loan_term_months": loan.selectbox("Loan term", [12, 18, 24, 36, 48, 60], index=2), "interest_rate": loan.number_input("Interest rate", 8.0, 30.0, 14.0), "proposed_emi_inr": loan.number_input("Proposed monthly EMI (INR)", 1_000, 300_000, 15_000), "foir": loan.slider("Fixed obligation to income ratio", 0.0, 1.25, 0.35), "loan_to_income_ratio": loan.slider("Loan to income ratio", 0.0, 10.0, 0.40)}
         submitted = st.form_submit_button("Estimate default risk")
     if submitted:
-        for month in range(2, 7):
-            values[f"bill_amount_{month}"] = values["bill_amount_1"]
-            values[f"payment_amount_{month}"] = values["payment_amount_1"]
         try:
             result = make_prediction(values)
             for box, label, value in zip(st.columns(4), ["Default probability", "Risk score", "Risk category", "Decision"], [f"{result['default_probability']:.1%}", f"{result['risk_score']}/100", result["risk_category"], result["decision"]]):
@@ -74,9 +69,9 @@ def prediction_page() -> None:
 def portfolio(data: pd.DataFrame) -> None:
     st.title("Exposure Analytics")
     lgd = st.slider("Loss given default", .05, .90, .45)
-    expected_loss = (data.default * data.credit_limit * lgd).sum()
-    for box, label, value in zip(st.columns(4), ["Total credit exposure", "Observed defaults", "Expected loss", "Observed default rate"], [f"NT${data.credit_limit.sum():,.0f}", f"{data.default.sum():,.0f}", f"NT${expected_loss:,.0f}", f"{data.default.mean():.1%}"]): box.metric(label, value)
-    st.caption("Expected loss is calculated from default outcomes, credit-limit exposure, and the selected LGD.")
+    expected_loss = (data.default * data.loan_amount_inr * lgd).sum()
+    for box, label, value in zip(st.columns(4), ["Total loan exposure", "Observed defaults", "Expected loss", "Observed default rate"], [f"INR {data.loan_amount_inr.sum():,.0f}", f"{data.default.sum():,.0f}", f"INR {expected_loss:,.0f}", f"{data.default.mean():.1%}"]): box.metric(label, value)
+    st.caption("Expected loss is calculated from default outcomes, loan exposure, and the selected LGD.")
 
 
 def load_metrics() -> dict:
@@ -108,14 +103,13 @@ def model_performance() -> None:
 def risk_analysis(data: pd.DataFrame) -> None:
     st.title("Risk Analysis")
     age_range = st.slider("Age range", int(data.age.min()), int(data.age.max()), (int(data.age.min()), int(data.age.max())))
-    limit_range = st.slider("Credit-limit range (NT$)", int(data.credit_limit.min()), int(data.credit_limit.quantile(.99)), (int(data.credit_limit.min()), int(data.credit_limit.quantile(.99))))
-    status_options = sorted(data.pay_status_0.unique().tolist())
-    selected_statuses = st.multiselect("September payment statuses", status_options, default=status_options)
-    filtered = data[data.age.between(*age_range) & data.credit_limit.between(*limit_range) & data.pay_status_0.isin(selected_statuses)]
-    st.caption(f"Showing {len(filtered):,} selected accounts.")
+    loan_range = st.slider("Loan amount range (INR)", int(data.loan_amount_inr.min()), int(data.loan_amount_inr.quantile(.99)), (int(data.loan_amount_inr.min()), int(data.loan_amount_inr.quantile(.99))))
+    selected_types = st.multiselect("Loan types", sorted(data.loan_type.unique()), default=sorted(data.loan_type.unique()))
+    filtered = data[data.age.between(*age_range) & data.loan_amount_inr.between(*loan_range) & data.loan_type.isin(selected_types)]
+    st.caption(f"Showing {len(filtered):,} selected applications.")
     left, right = st.columns(2)
-    left.plotly_chart(px.box(filtered, x="default", y="average_repayment_delay", title="Repayment delay by observed outcome"), width="stretch")
-    right.plotly_chart(px.histogram(filtered, x="credit_utilization_proxy", color="default", nbins=40, barmode="overlay", title="Utilization proxy by observed outcome"), width="stretch")
+    left.plotly_chart(px.box(filtered, x="default", y="foir", title="FOIR by observed outcome"), width="stretch")
+    right.plotly_chart(px.histogram(filtered, x="bureau_score", color="default", nbins=40, barmode="overlay", title="Bureau score by observed outcome"), width="stretch")
 
 
 data = load_data()

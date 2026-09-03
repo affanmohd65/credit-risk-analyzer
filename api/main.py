@@ -5,7 +5,7 @@ from functools import lru_cache
 import joblib
 from fastapi import FastAPI, HTTPException
 
-from api.schemas import BatchRequest, CreditAccount
+from api.schemas import BatchRequest, IndianLoanApplication
 from src.config import METRICS_PATH, MODEL_PATH, RISK_RULES
 from src.explainability import individual_risk_factors
 from src.prediction import predict_records
@@ -27,7 +27,7 @@ def health() -> dict[str, str]:
 
 
 @app.post("/predict")
-def predict(application: CreditAccount) -> dict:
+def predict(application: IndianLoanApplication) -> dict:
     try:
         values = application.model_dump()
         prediction = predict_records(get_model(), [values])[0]

@@ -17,11 +17,12 @@ def global_feature_importance(model: Any) -> list[dict[str, float | str]]:
 
 def individual_risk_factors(application: dict[str, Any]) -> dict[str, list[str]]:
     increases, reduces = [], []
-    statuses = [application.get(f"pay_status_{month}", 0) for month in [0, 2, 3, 4, 5, 6]]
-    if max(statuses) > 0: increases.append("Recent delayed payment status")
-    if application.get("bill_amount_1", 0) > application.get("credit_limit", 1) * .70: increases.append("High current balance relative to credit limit")
-    if application.get("payment_amount_1", 0) < application.get("bill_amount_1", 0) * .05: increases.append("Low recent payment relative to statement balance")
-    if max(statuses) <= 0: reduces.append("No recent recorded payment delays")
-    if application.get("bill_amount_1", 0) < application.get("credit_limit", 1) * .30: reduces.append("Lower current balance relative to credit limit")
-    if application.get("payment_amount_1", 0) >= application.get("bill_amount_1", 0) * .25: reduces.append("Meaningful recent payment")
+    if application.get("bureau_score", 900) < 650: increases.append("Lower bureau score")
+    if application.get("foir", 0) > .50: increases.append("High fixed-obligation-to-income ratio")
+    if application.get("overdue_accounts", 0) > 0: increases.append("Existing overdue accounts")
+    if application.get("credit_inquiries_6m", 0) >= 4: increases.append("High recent credit inquiry count")
+    if application.get("employment_type") == "Contract": increases.append("Contract employment profile")
+    if application.get("bureau_score", 0) >= 750: reduces.append("Strong bureau score")
+    if application.get("foir", 1) < .35: reduces.append("Comfortable obligation-to-income ratio")
+    if application.get("bank_balance_inr", 0) >= application.get("loan_amount_inr", 1) * .50: reduces.append("Strong bank-balance buffer")
     return {"risk_factors": increases, "positive_factors": reduces}

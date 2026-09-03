@@ -1,23 +1,35 @@
-# Credit Risk Analyzer
+# India Credit Risk Analyzer
 
-An end-to-end credit risk analytics project using the public **UCI Default of Credit Card Clients** dataset. It ingests and validates data, engineers features, trains and calibrates multiple classifiers, exposes predictions through FastAPI, and presents results in Streamlit.
+An end-to-end machine-learning project for India-focused retail-loan default prediction. The application creates an INR lending portfolio, validates data quality, engineers lending features, compares and calibrates classifiers, provides FastAPI prediction endpoints, and presents portfolio insights in Streamlit.
 
-## Data Source
+## India Lending Portfolio
 
-The project downloads 30,000 account records from the UCI Machine Learning Repository:
+The reproducible generator creates 100,000 retail-loan applications under a fixed random seed. The data model reflects common Indian retail-credit inputs:
 
-- Yeh, I. (2009). *Default of Credit Card Clients*. UCI Machine Learning Repository. DOI: [10.24432/C55S3H](https://doi.org/10.24432/C55S3H)
-- License: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+- City, employment type, employment tenure, and residence type
+- Annual income in INR, bank balance, existing EMI, and proposed EMI
+- Bureau score, overdue accounts, and credit inquiries from the previous six months
+- Loan type, amount, term, interest rate, FOIR, and loan-to-income ratio
 
-The target is default payment in the next month. Predictors include credit limit, demographic codes, six months of repayment status, six statement balances, and six payment amounts. The repository includes the downloaded public data and trained artifact so Streamlit Cloud can serve predictions immediately.
+Default outcomes are driven by bureau score, repayment obligations, overdue accounts, inquiry frequency, employment profile, loan exposure, bank balance, and residence type. The generated portfolio is designed to demonstrate Indian credit-risk workflows and does not contain lender customer records.
 
-## Methodology
+## Technology Stack
 
-- Data validation: missingness, duplicate rows, age, credit-limit, repayment-status, and outlier checks.
-- Features: average statement balance, average payment, payment-to-bill ratio, current balance-to-limit ratio, repayment delay, delayed-payment months, balance trend, and financial stress.
-- Evaluation: stratified train/validation/test split, class weighting, PR-AUC model selection, ROC-AUC, precision, recall, F1, specificity, FPR, FNR, confusion counts, threshold tuning, and sigmoid probability calibration.
-- Models: Logistic Regression, Decision Tree, Random Forest, and XGBoost.
-- Monitoring: Population Stability Index (PSI) with Normal, Warning, and Critical bands.
+- Python 3.12, pandas, NumPy, scikit-learn, XGBoost, imbalanced-learn, joblib
+- FastAPI, Pydantic, Uvicorn
+- Streamlit, Plotly, requests
+- pytest, Docker, Docker Compose, GitHub Actions
+
+## Modeling Workflow
+
+- Validation for missing values, duplicate records, invalid age, INR values, bureau score, FOIR, class distribution, and outliers
+- Features for EMI-to-income, total EMI-to-income, loan-to-income, balance-to-loan, bureau risk gap, and financial stress
+- Stratified train, validation, and test split
+- Logistic Regression, Decision Tree, Random Forest, and XGBoost comparison
+- Class weighting and `scale_pos_weight` for class imbalance
+- PR-AUC model selection, F1-based threshold selection, and sigmoid probability calibration
+- Accuracy, precision, recall, F1, ROC-AUC, PR-AUC, specificity, FPR, FNR, and confusion-matrix metrics
+- Risk categories, expected-loss analytics, and PSI monitoring
 
 ## Run Locally
 
@@ -25,13 +37,23 @@ The target is default payment in the next month. Predictors include credit limit
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python scripts/download_data.py
+python scripts/generate_india_data.py
 python src/train.py
 uvicorn api.main:app --reload
 streamlit run app/streamlit_app.py
 ```
 
-Open `http://localhost:8501` for the dashboard and `http://localhost:8000/docs` for API documentation. The dashboard uses the local trained model by default. To send predictions through a separately hosted FastAPI service, set `API_URL` to its public base URL.
+Open `http://localhost:8501` for the dashboard and `http://localhost:8000/docs` for the FastAPI documentation.
+
+## API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Service readiness |
+| `POST` | `/predict` | One Indian retail-loan prediction |
+| `POST` | `/batch-predict` | Batch default probability predictions |
+| `GET` | `/model-info` | Model selection and evaluation metrics |
+| `GET` | `/risk-rules` | Risk-band thresholds |
 
 ## Docker
 
@@ -39,13 +61,7 @@ Open `http://localhost:8501` for the dashboard and `http://localhost:8000/docs` 
 docker compose up --build
 ```
 
-The API is exposed on port 8000 and the dashboard on port 8501.
-
-## Streamlit Cloud
-
-1. Create a Streamlit Cloud app from `affanmohd65/credit-risk-analyzer`.
-2. Select `main` as the branch and `app/streamlit_app.py` as the entry point.
-3. Deploy. No secrets are required for the self-contained Cloud application because the public data and fitted model are included.
+The Docker image generates the Indian loan portfolio and trains the model. FastAPI is exposed on port 8000 and Streamlit on port 8501.
 
 ## Tests
 
@@ -53,8 +69,8 @@ The API is exposed on port 8000 and the dashboard on port 8501.
 pytest -q
 ```
 
-Tests cover validation, feature engineering, risk rules, and FastAPI input validation.
+Tests cover Indian lending validation, feature engineering, risk categorization, decision logic, and FastAPI request validation.
 
-## Limitations
+## Streamlit Cloud
 
-The UCI data represents a specific historical population and period. Before any real-world use, conduct temporal validation, fairness analysis, economic stress testing, privacy and security review, model governance, monitoring against observed outcomes, and regulatory review.
+Deploy `app/streamlit_app.py` from the `main` branch. The Streamlit application loads the fitted model directly by default. Set `API_URL` only when using a separately deployed FastAPI service.

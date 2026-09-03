@@ -7,21 +7,15 @@ from src.prediction import loan_decision, risk_category
 from src.validation import validate_data
 
 
-def account_frame() -> pd.DataFrame:
-    values = {"account_id": [1, 2], "credit_limit": [50_000, 80_000], "sex": [1, 2], "education": [2, 1], "marital_status": [1, 2], "age": [35, 40], "default": [0, 1]}
-    for month in [0, 2, 3, 4, 5, 6]:
-        values[f"pay_status_{month}"] = [0, 2]
-    for index in range(1, 7):
-        values[f"bill_amount_{index}"] = [15_000, 70_000]
-        values[f"payment_amount_{index}"] = [5_000, 500]
-    return pd.DataFrame(values)
+def loan_frame() -> pd.DataFrame:
+    return pd.DataFrame({"application_id": ["INR0000001", "INR0000002"], "age": [35, 40], "city_tier": ["Mumbai", "Pune"], "employment_type": ["Salaried", "Contract"], "employment_years": [8, 2], "annual_income_inr": [900_000, 450_000], "residence_type": ["Owned", "Rented"], "bureau_score": [760, 590], "credit_inquiries_6m": [1, 5], "overdue_accounts": [0, 2], "existing_emi_inr": [10_000, 25_000], "bank_balance_inr": [300_000, 15_000], "loan_type": ["Personal Loan", "Business Loan"], "loan_amount_inr": [250_000, 700_000], "loan_term_months": [24, 36], "interest_rate": [12.5, 20.0], "proposed_emi_inr": [12_000, 30_000], "foir": [.29, .85], "loan_to_income_ratio": [.28, 1.56], "default": [0, 1]})
 
 
 def test_validation_and_features():
-    data = account_frame()
+    data = loan_frame()
     data.loc[0, "age"] = 12
     assert validate_data(data).invalid_counts["invalid_age"] == 1
-    assert {"average_repayment_delay", "financial_stress_score"}.issubset(engineer_features(data).columns)
+    assert {"emi_to_income_ratio", "financial_stress_score"}.issubset(engineer_features(data).columns)
 
 
 def test_risk_decision_rules():

@@ -4,24 +4,21 @@ import numpy as np
 import pandas as pd
 
 
-ID_COLUMNS = ["account_id"]
+ID_COLUMNS = ["application_id"]
 TARGET_COLUMN = "default"
 
 
 def engineer_features(frame: pd.DataFrame) -> pd.DataFrame:
     """Create ratios using only application-time attributes."""
     output = frame.copy()
-    bill_columns = [f"bill_amount_{index}" for index in range(1, 7)]
-    payment_columns = [f"payment_amount_{index}" for index in range(1, 7)]
-    status_columns = ["pay_status_0", "pay_status_2", "pay_status_3", "pay_status_4", "pay_status_5", "pay_status_6"]
-    output["average_bill_amount"] = output[bill_columns].mean(axis=1)
-    output["average_payment_amount"] = output[payment_columns].mean(axis=1)
-    output["payment_to_bill_ratio"] = output["average_payment_amount"] / output["average_bill_amount"].abs().clip(lower=1)
-    output["credit_utilization_proxy"] = output["bill_amount_1"].clip(lower=0) / output["credit_limit"].clip(lower=1)
-    output["average_repayment_delay"] = output[status_columns].mean(axis=1)
-    output["late_payment_months"] = (output[status_columns] > 0).sum(axis=1)
-    output["balance_trend"] = output["bill_amount_1"] - output["bill_amount_6"]
-    output["financial_stress_score"] = np.clip(output["credit_utilization_proxy"] * (1 + output["average_repayment_delay"].clip(lower=0)), 0, 10)
+    monthly_income = output["annual_income_inr"].clip(lower=1) / 12
+    output["emi_to_income_ratio"] = output["proposed_emi_inr"] / monthly_income
+    output["existing_emi_to_income_ratio"] = output["existing_emi_inr"] / monthly_income
+    output["total_emi_to_income_ratio"] = (output["existing_emi_inr"] + output["proposed_emi_inr"]) / monthly_income
+    output["loan_to_income_ratio_derived"] = output["loan_amount_inr"] / output["annual_income_inr"].clip(lower=1)
+    output["balance_to_loan_ratio"] = output["bank_balance_inr"] / output["loan_amount_inr"].clip(lower=1)
+    output["bureau_risk_gap"] = np.clip((750 - output["bureau_score"]) / 450, 0, 1)
+    output["financial_stress_score"] = np.clip(output["foir"] * (1 + output["overdue_accounts"]) * (1 + output["credit_inquiries_6m"] / 10), 0, 10)
     return output
 
 

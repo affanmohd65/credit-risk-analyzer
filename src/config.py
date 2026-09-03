@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW_DATA_PATH = ROOT / "data" / "raw" / "uci_credit_card_default.csv"
+RAW_DATA_PATH = ROOT / "data" / "raw" / "india_retail_loan_portfolio.csv"
 PROCESSED_DIR = ROOT / "data" / "processed"
 MODEL_PATH = ROOT / "models" / "credit_risk_model.joblib"
 METRICS_PATH = ROOT / "models" / "model_metrics.json"
