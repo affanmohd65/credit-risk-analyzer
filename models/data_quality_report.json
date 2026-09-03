@@ -1,0 +1,43 @@
+{
+  "rows": 30000,
+  "duplicates": 0,
+  "missing_values": {
+    "account_id": 0,
+    "credit_limit": 0,
+    "sex": 0,
+    "education": 0,
+    "marital_status": 0,
+    "age": 0,
+    "pay_status_0": 0,
+    "pay_status_2": 0,
+    "pay_status_3": 0,
+    "pay_status_4": 0,
+    "pay_status_5": 0,
+    "pay_status_6": 0,
+    "bill_amount_1": 0,
+    "bill_amount_2": 0,
+    "bill_amount_3": 0,
+    "bill_amount_4": 0,
+    "bill_amount_5": 0,
+    "bill_amount_6": 0,
+    "payment_amount_1": 0,
+    "payment_amount_2": 0,
+    "payment_amount_3": 0,
+    "payment_amount_4": 0,
+    "payment_amount_5": 0,
+    "payment_amount_6": 0,
+    "default": 0
+  },
+  "invalid_counts": {
+    "invalid_age": 0,
+    "nonpositive_credit_limit": 0,
+    "invalid_payment_status": 0
+  },
+  "default_rate": 0.2212,
+  "outlier_counts": {
+    "credit_limit": 167,
+    "bill_amount_1": 2400,
+    "payment_amount_1": 2745
+  },
+  "source": "Yeh, I. (2009). Default of Credit Card Clients. UCI Machine Learning Repository. DOI: 10.24432/C55S3H"
+}
