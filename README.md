@@ -1,76 +1,73 @@
 # India Credit Risk Analyzer
 
-An end-to-end machine-learning project for India-focused retail-loan default prediction. The application creates an INR lending portfolio, validates data quality, engineers lending features, compares and calibrates classifiers, provides FastAPI prediction endpoints, and presents portfolio insights in Streamlit.
+An end-to-end machine learning application for predicting retail-loan default risk in an India-focused lending portfolio.
 
-## India Lending Portfolio
+The project demonstrates a complete credit-risk workflow: data generation, validation, feature engineering, machine-learning model comparison, probability calibration, risk scoring, FastAPI model serving, Streamlit analytics, portfolio expected-loss analysis, monitoring, testing, Docker, and GitHub Actions CI.
 
-The reproducible generator creates 100,000 retail-loan applications under a fixed random seed. The data model reflects common Indian retail-credit inputs:
+## Project Overview
 
-- City, employment type, employment tenure, and residence type
-- Annual income in INR, bank balance, existing EMI, and proposed EMI
-- Bureau score, overdue accounts, and credit inquiries from the previous six months
-- Loan type, amount, term, interest rate, FOIR, and loan-to-income ratio
+Financial institutions need to estimate the probability that a borrower may default before approving a loan. This project predicts the probability of default for Indian retail-loan applications and converts that estimate into:
 
-Default outcomes are driven by bureau score, repayment obligations, overdue accounts, inquiry frequency, employment profile, loan exposure, bank balance, and residence type. The generated portfolio is designed to demonstrate Indian credit-risk workflows and does not contain lender customer records.
+- Default probability
+- Risk score
+- Risk category
+- Recommended decision
+- Risk and protective factors
 
-## Technology Stack
+The dashboard also provides portfolio-level insights such as loan exposure, expected loss, default rate, bureau-score distribution, FOIR distribution, and risk patterns by geography and loan type.
 
-- Python 3.12, pandas, NumPy, scikit-learn, XGBoost, imbalanced-learn, joblib
-- FastAPI, Pydantic, Uvicorn
-- Streamlit, Plotly, requests
-- pytest, Docker, Docker Compose, GitHub Actions
+## Business Objective
 
-## Modeling Workflow
+The objective is to help a lender evaluate retail-loan applications based on borrower affordability, repayment capacity, credit behavior, and existing obligations.
 
-- Validation for missing values, duplicate records, invalid age, INR values, bureau score, FOIR, class distribution, and outliers
-- Features for EMI-to-income, total EMI-to-income, loan-to-income, balance-to-loan, bureau risk gap, and financial stress
-- Stratified train, validation, and test split
-- Logistic Regression, Decision Tree, Random Forest, and XGBoost comparison
-- Class weighting and `scale_pos_weight` for class imbalance
-- PR-AUC model selection, F1-based threshold selection, and sigmoid probability calibration
-- Accuracy, precision, recall, F1, ROC-AUC, PR-AUC, specificity, FPR, FNR, and confusion-matrix metrics
-- Risk categories, expected-loss analytics, and PSI monitoring
+The application focuses on important lending signals:
 
-## Run Locally
+- Bureau score
+- Fixed Obligation to Income Ratio (FOIR)
+- Existing overdue accounts
+- Recent credit inquiries
+- Employment type
+- Annual income
+- Existing EMI obligations
+- Proposed EMI
+- Loan amount
+- Loan term
+- Interest rate
+- Bank balance
+- Residence type
+- City and loan type
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python scripts/generate_india_data.py
-python src/train.py
-uvicorn api.main:app --reload
-streamlit run app/streamlit_app.py
-```
+## Dataset
 
-Open `http://localhost:8501` for the dashboard and `http://localhost:8000/docs` for the FastAPI documentation.
+This project uses a reproducible India-focused retail-loan portfolio generator.
 
-## API
+The generator creates `100,000` loan applications with realistic relationships between borrower profile, financial behavior, loan attributes, and default outcomes.
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/health` | Service readiness |
-| `POST` | `/predict` | One Indian retail-loan prediction |
-| `POST` | `/batch-predict` | Batch default probability predictions |
-| `GET` | `/model-info` | Model selection and evaluation metrics |
-| `GET` | `/risk-rules` | Risk-band thresholds |
+### Data Characteristics
 
-## Docker
+- INR-based annual income, loan amount, EMI, and bank balance
+- Indian city segments including Mumbai, Delhi NCR, Bengaluru, Chennai, Hyderabad, Pune, Ahmedabad, Kolkata, and Tier 2/3 locations
+- Employment types including Salaried, Self Employed, Professional, and Contract
+- Loan types including Personal Loan, Two Wheeler, Consumer Durable, Home Improvement, and Business Loan
+- Bureau scores from `300` to `900`
+- FOIR values representing total monthly debt obligations relative to income
+- Controlled missing values and outliers for data-quality validation
+- Feature-dependent default generation
+- Approximately 5–15% default rate
 
-```powershell
-docker compose up --build
-```
+## Default-Risk Relationships
 
-The Docker image generates the Indian loan portfolio and trains the model. FastAPI is exposed on port 8000 and Streamlit on port 8501.
+Default probability is influenced by realistic lending factors:
 
-## Tests
-
-```powershell
-pytest -q
-```
-
-Tests cover Indian lending validation, feature engineering, risk categorization, decision logic, and FastAPI request validation.
-
-## Streamlit Cloud
-
-Deploy `app/streamlit_app.py` from the `main` branch. The Streamlit application loads the fitted model directly by default. Set `API_URL` only when using a separately deployed FastAPI service.
+```text
+Lower bureau score                 -> Higher default risk
+Higher FOIR                        -> Higher default risk
+More overdue accounts              -> Higher default risk
+More recent credit inquiries       -> Higher default risk
+Contract employment                -> Higher default risk
+Higher loan exposure               -> Higher default risk
+Lower bank balance                 -> Higher default risk
+Rented residence                   -> Higher default risk
+Stable employment                  -> Lower default risk
+Higher bureau score                -> Lower default risk
+Lower repayment burden             -> Lower default risk
